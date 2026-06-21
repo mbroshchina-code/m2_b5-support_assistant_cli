@@ -3,25 +3,45 @@
 Простое CLI-приложение для практики блока 2.5. Помощник отвечает только по теме поиска багов, умеет классифицировать обращения (FAQ или проблема) , кешировать (одинаковые вопросы) в In-memory кэш, делать retry (tenacity) и fallback, логировать диалог и поддерживает базовые команды. Так как прямое назначение помощника - классифицировать баги, то при FAQ запросах мы не обращаемся к модели за поиском багов и не тратим токены, а отдаем залушку "Запрос не относится к проблемам. Найдите ответ в базе знаний"
 
 ## Структура
+```text
 bag_assistant_cli/
-  cli.py                  # точка входа
-  models.py               # все dataclass-ы и type alias-ы
-  core/
-    assistant.py          # сценарий диалога и команды CLI
-    classification.py     # категории
-  infrastructure/
-    cache.py              # In-memory кэш, пока не удалось установить Redis
-    llm.py                # retry (tenacity) + fallback для LLM
-  prompts/
-    loader.py             # загрузка prompt-файлов
-    system_prompt.txt
-    classifier_system_prompt.txt
-    classifier_few_shots.json
-    service_facts.txt
-## Запуск
-Из папки: 
-python -m m2_b5
 
+  cli.py                  # точка входа
+  
+  models.py               # все dataclass-ы и type alias-ы
+  
+  core/
+  
+    assistant.py          # сценарий диалога и команды CLI
+    
+    classification.py     # категории
+    
+  infrastructure/
+
+    cache.py              # In-memory кэш, пока не удалось установить Redis
+    
+    llm.py                # retry (tenacity) + fallback для LLM
+    
+  prompts/
+  
+    loader.py             # загрузка prompt-файлов
+    
+    system_prompt.txt
+    
+    classifier_system_prompt.txt
+    
+    classifier_few_shots.json
+    
+    service_facts.txt
+```
+
+## Запуск
+
+Из папки: 
+```bash
+python -m m2_b5
+```
 ## Прочее
 BAG_SERVICE_NAME — имя сервиса, по умолчанию EVA/
+
 Без ключей приложение тоже работает: классификация работает эвристикой, при недоступности обоих провайдеров — заглушка "Извините, что-то пошло не по плану. Пожалуйста, повторите попытку или напишите чуть позже."
