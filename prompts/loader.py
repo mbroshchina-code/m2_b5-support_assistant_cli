@@ -6,13 +6,14 @@
 """
 
 from __future__ import annotations
-
+import base64
 import json
 from importlib import resources
 from string import Template
 from typing import Any
+from pathlib import Path
 import copy
-
+import os
 
 def _read_prompt_file(filename: str) -> str:
     return resources.files(__package__).joinpath(filename).read_text(encoding="utf-8").strip()
@@ -37,12 +38,42 @@ def answer_bags_few_shot_messages() -> list[dict[str, str]]:
     """Возвращает копию few-shot примеров для багов."""
     return copy.deepcopy(CLASSIFIER_BAGS_FEW_SHOTS)
 
+def encode_image(image_path: str) -> tuple[str, str]:
+    """Кодирует изображение в base64. Возвращает (base64_data, расширение)."""
+    p = Path(image_path)
+    ext = p.suffix.lstrip(".").lower()
+    if ext == "jpg":
+        ext = "jpeg"
+    return base64.b64encode(p.read_bytes()).decode("utf-8"), ext
 
-def build_answer_messages(system_prompt: str, history: list[dict[str, str]], user_message: str) -> list[dict[str, str]]:
-    messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+def build_answer_messages(
+    system_prompt: str, 
+    history: list[dict[str, str]], 
+    user_message: str,
+    image_path: str | None = None  # Добавили новый необязательный аргумент
+) -> list[dict[str, any]]:  # Тип Any, так как структура контента усложняется
+    """Собирает полный список сообщений с возможностью передачи изображения в Base64."""
+    
+    # 1. Формируем базовый системный промпт и фьюшоты
+    messages: list[dict[str, any]] = [{"role": "system", "content": system_prompt}]
     messages.extend(answer_bags_few_shot_messages())
     messages.extend(history)
-    messages.append({"role": "user", "content": user_message})
+    
+    # 2. Добавляем реплику пользователя (мультимодальную или обычную текстовую)
+    # Проверяем, что путь передан и такой файл физически существует на диске
+    if image_path and os.path.exists(image_path):
+        b64, ext = encode_image(image_path)
+        content: list[dict[str, Any]] = [
+            {"type": "text", "text": user_message},
+            {"type": "image_url", "image_url": {
+                "url": f"data:image/{ext};base64,{b64}",
+                "detail": "high",  # важно для распознавания скриншотов ошибок
+            }},
+        ]
+        messages.append({"role": "user", "content": content})
+    else:
+        messages.append({"role": "user", "content": user_message})
+
     return messages
 
 def build_classifier_messages(user_message: str) -> list[dict[str, Any]]:
