@@ -18,7 +18,7 @@ bag_assistant_cli/
     
   infrastructure/
 
-    cache.py              # In-memory кэш, пока не удалось установить Redis
+    cache.py              # пока не удалось установить Redis
     
     llm.py                # retry (tenacity) + fallback для LLM
     
